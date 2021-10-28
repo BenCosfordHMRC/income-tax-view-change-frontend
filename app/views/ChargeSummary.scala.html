@@ -115,6 +115,13 @@
                             <br>
                             <span class="govuk-body-s half-light">@messages("chargeSummary.paymentBreakdown.dunningLocks.underReview")</span>
                         }
+                        @if(latePaymentInterestCharge && documentDetail.lpiWithDunningBlock.isDefined) {
+                        @p(){
+                        <a class="govuk-notification-banner__link" href="@appConfig.taxAppealsUrl" target="_blank">@messages("chargeSummary.dunning.locks.banner.linkText")</a>.
+                        @messages("chargeSummary.paymentBreakdown.lpiWithDunning.text")
+                        <span class="govuk-body-s half-light">@messages("chargeSummary.paymentBreakdown.lpiWithDunning.underReview")</span>
+                        }
+                             }
                         @if(hasInterestLocks){
                             @if(!financialDetail.interestLockExists){<div class="form-hint govuk-body-s"> @messages("chargeSummary.paymentBreakdown.interestLocks.charging") </div>}
                             @if(financialDetail.interestLockExists && !financialDetail.hasAccruedInterest){<div class="form-hint govuk-body-s"> @messages("chargeSummary.paymentBreakdown.interestLocks.notCharging") </div>}
@@ -126,7 +133,6 @@
         </dl>
         <br>
     }
-
     @if(hasInterestLocks && hasAccruedInterest) {
         @p(){
             @messages("chargeSummary.interestLocks.text")

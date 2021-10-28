@@ -41,6 +41,8 @@ case class FinancialDetail(taxYear: String,
 
   lazy val interestLockExists: Boolean = interestLocks.nonEmpty
 
+  lazy val lpiWithDunningBlockExists:Boolean = lpiWithDunningBlock.nonEmpty
+
   lazy val hasAccruedInterest: Boolean = accruedInterest.isDefined
 
   lazy val dunningLocks: Seq[SubItem] = {
@@ -48,6 +50,8 @@ case class FinancialDetail(taxYear: String,
       subItems.filter(_.dunningLock.contains("Stand over order"))
     }
   }
+
+  lazy private val lpiWithDunningBlock = Set("Late payment interest")
 
   lazy private val interestLockReasons = Set(
     "Clerical Interest Signal",

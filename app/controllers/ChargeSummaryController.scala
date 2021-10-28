@@ -83,10 +83,14 @@ class ChargeSummaryController @Inject()(authenticate: AuthenticationPredicate,
 		val documentDetail = chargeDetails.documentDetails.find(_.transactionId == id).get
 		val financialDetails = chargeDetails.financialDetails.filter(_.transactionId.contains(id))
 
-		val paymentBreakdown: List[FinancialDetail] =
-			if (!isLatePaymentCharge) {
+		val paymentBreakdown: List[FinancialDetail] = {
+			if (isLatePaymentCharge && documentDetail.lpiWithDunningBlock.isDefined) {
+			 Ok(chargeSummaryView(paymentBreakdown,dueDate = dueDate))
+			}
+			else if (!isLatePaymentCharge) {
 				financialDetails.filter(_.messageKeyByTypes.isDefined)
 			} else Nil
+		}
 
 		val paymentAllocationEnabled: Boolean = isEnabled(PaymentAllocation)
 		val paymentAllocations: List[PaymentsWithChargeType] =

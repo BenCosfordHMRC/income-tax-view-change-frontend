@@ -546,7 +546,8 @@ chargeSummary.overdue                                              = OVERDUE
 chargeSummary.dunning.locks.banner.title						   = Important
 chargeSummary.dunning.locks.banner.linkText						   = This tax decision is being reviewed (opens in new tab)
 chargeSummary.dunning.locks.banner.note							   = You still need to pay the total of {0} as you may be charged interest if not paid by {1}.
-
+chargeSummary.paymentBreakdown.lpiWithDunning.text                 = Late payment interest
+chargeSummary.paymentBreakdown.lpiWithDunning.underReview          = Under review
 chargeSummary.paymentBreakdown.heading   						   = Payment breakdown
 chargeSummary.paymentBreakdown.incomeTax   						   = Income Tax
 chargeSummary.paymentBreakdown.nic2   							   = Class 2 National Insurance

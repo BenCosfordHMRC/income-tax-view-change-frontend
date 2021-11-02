@@ -117,7 +117,6 @@
                         }
                         @if(latePaymentInterestCharge && documentDetail.lpiWithDunningBlock.isDefined) {
                         @p(){
-                        <a class="govuk-notification-banner__link" href="@appConfig.taxAppealsUrl" target="_blank">@messages("chargeSummary.dunning.locks.banner.linkText")</a>.
                         @messages("chargeSummary.paymentBreakdown.lpiWithDunning.text")
                         <span class="govuk-body-s half-light">@messages("chargeSummary.paymentBreakdown.lpiWithDunning.underReview")</span>
                         }

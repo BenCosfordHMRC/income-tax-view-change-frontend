@@ -68,7 +68,7 @@ class HomePageViewSpec extends TestSupport {
   val nextPaymentDue: LocalDate = LocalDate.of(2019, 1, 31)
 
 
-  class Setup(paymentDueDate: Option[LocalDate] = Some(nextPaymentDueDate), overDuePaymentsCount: Option[Int] = Some(0),
+  class Setup(paymentDueDate: Option[LocalDate] = Some(nextPaymentDueDate), overDuePaymentsCount: Int = 0,
               overDueUpdatesCount: Option[Int] = Some(0),
               nextPaymentOrOverdue: Option[Either[(LocalDate, Boolean), Int]] = Some(Left((nextPaymentDue, false))),
               nextUpdateOrOverdue: Either[(LocalDate, Boolean), Int] = Left((nextUpdateDue, false)),
@@ -163,23 +163,23 @@ class HomePageViewSpec extends TestSupport {
         getElementById("payments-tile").map(_.select("p:nth-child(2)").text) shouldBe Some(paymentDateLongDate)
       }
 
-      "dont display an overdue warning message when no payment is overdue" in new Setup(overDuePaymentsCount = Some(0)) {
+      "dont display an overdue warning message when no payment is overdue" in new Setup(overDuePaymentsCount = 0) {
         getTextOfElementById("overdue-warning") shouldBe None
       }
 
-      "display an overdue warning message when a payment is overdue" in new Setup(overDuePaymentsCount = Some(1)) {
+      "display an overdue warning message when a payment is overdue" in new Setup(overDuePaymentsCount = 1) {
         getTextOfElementById("overdue-warning") shouldBe Some(overdueMessage)
       }
 
-      "display an dunning lock overdue warning message when a payment is overdue" in new Setup(overDuePaymentsCount = Some(1), dunningLockExists = true) {
+      "display an dunning lock overdue warning message when a payment is overdue" in new Setup(overDuePaymentsCount = 1, dunningLockExists = true) {
         getTextOfElementById("overdue-warning") shouldBe Some(overdueMessageForDunningLocks)
       }
 
-      "display an overdue tag when a single update is overdue" in new Setup(overDuePaymentsCount = Some(1)) {
+      "display an overdue tag when a single update is overdue" in new Setup(overDuePaymentsCount = 1) {
         getElementById("payments-tile").map(_.select("p:nth-child(2)").text) shouldBe Some("OVERDUE " + paymentDateLongDate)
       }
 
-      "has the correct number of overdue updates when three updates are overdue" in new Setup(overDuePaymentsCount = Some(3)) {
+      "has the correct number of overdue updates when three updates are overdue" in new Setup(overDuePaymentsCount = 3) {
         getElementById("payments-tile").map(_.select("p:nth-child(2)").text) shouldBe Some(multipleOverduePayments)
       }
       "has a link to view payments" in new Setup {
@@ -247,7 +247,7 @@ class HomePageViewSpec extends TestSupport {
         "is not overdue" in new Setup(nextUpdateOrOverdue = Left(nextUpdateDue -> false),isAgent = true) {
           getElementById("updates-tile").map(_.select("p:nth-child(2)").text) shouldBe Some(s"1 January 2018")
         }
-        "is a count of overdue updates" in new Setup(nextUpdateOrOverdue = Right(2),isAgent = true) {
+        "is a count of overdue updates" in new Setup(nextUpdateOrOverdue = Right(2), overDuePaymentsCount = 2, isAgent = true) {
           getElementById("updates-tile").map(_.select("p:nth-child(2)").text) shouldBe Some(s"2 OVERDUE UPDATES")
         }
       }
@@ -264,16 +264,16 @@ class HomePageViewSpec extends TestSupport {
         getElementById("payments-tile").map(_.select("h2").text) shouldBe Some(homeMessages.paymentsHeading)
       }
       "has content of the next payment due" which {
-        "is overdue" in new Setup(nextPaymentOrOverdue = Some(Left(nextPaymentDue -> true)),isAgent = true) {
+        "is overdue" in new Setup(nextPaymentOrOverdue = Some(Left(nextPaymentDue -> true)), isAgent = true) {
           getElementById("payments-tile").map(_.select("p:nth-child(2)").text) shouldBe Some(s"OVERDUE 31 January 2019")
         }
-        "is not overdue" in new Setup(nextPaymentOrOverdue = Some(Left(nextPaymentDue -> false)),isAgent = true) {
+        "is not overdue" in new Setup(nextPaymentOrOverdue = Some(Left(nextPaymentDue -> false)), isAgent = true) {
           getElementById("payments-tile").map(_.select("p:nth-child(2)").text) shouldBe Some(s"31 January 2019")
         }
-        "is a count of overdue payments" in new Setup(nextPaymentOrOverdue = Some(Right(2)),isAgent = true) {
+        "is a count of overdue payments" in new Setup(nextPaymentOrOverdue = Some(Right(2)), isAgent = true) {
           getElementById("payments-tile").map(_.select("p:nth-child(2)").text) shouldBe Some(s"2 OVERDUE PAYMENTS")
         }
-        "has no next payment" in new Setup(nextPaymentOrOverdue = None,isAgent = true) {
+        "has no next payment" in new Setup(nextPaymentOrOverdue = None, isAgent = true) {
           getElementById("payments-tile").map(_.select("p:nth-child(2)").text) shouldBe Some(s"No payments due")
         }
 

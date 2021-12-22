@@ -49,34 +49,43 @@ class HomeController @Inject()(home: views.html.Home,
                                dateFormatter: ImplicitDateFormatterImpl) extends ClientConfirmedController with I18nSupport with FeatureSwitching {
 
 
-  private def view(nextPaymentDueDate: Option[LocalDate],
-                   nextUpdate: LocalDate,
-                   overDuePaymentsCount: Option[Int],
-                    nextPaymentOrOverdue: Option[Either[(LocalDate, Boolean), Int]],
-                   nextUpdateOrOverdue: Either[(LocalDate, Boolean), Int],
-                   overduePaymentExists: Boolean,
-                   overDueUpdatesCount: Option[Int],
-                   dunningLockExists: Boolean,
-                   currentTaxYear: Int)
-                  (implicit request: Request[_], user: MtdItUser[_]): Html = {
-    home(
-      nextPaymentDueDate = nextPaymentDueDate,
-      nextUpdate = nextUpdate,
-      overDuePaymentsCount = overDuePaymentsCount,
-      nextPaymentOrOverdue = nextPaymentOrOverdue,
-      nextUpdateOrOverdue = nextUpdateOrOverdue,
-      overduePaymentExists = overduePaymentExists,
-      overDueUpdatesCount = overDueUpdatesCount,
-      utr = user.saUtr,
-      ITSASubmissionIntegrationEnabled = isEnabled(ITSASubmissionIntegration),
-      paymentHistoryEnabled = isEnabled(PaymentHistory),
-      implicitDateFormatter = dateFormatter,
-      dunningLockExists = dunningLockExists,
-      currentTaxYear = currentTaxYear,
-      isAgent = true
-     )
-  }
+//  private def view(nextPaymentDueDate: Option[LocalDate],
+//                   nextUpdate: LocalDate,
+//                   overDuePaymentsCount: Option[Int],
+//                    nextPaymentOrOverdue: Option[Either[(LocalDate, Boolean), Int]],
+//                   nextUpdateOrOverdue: Either[(LocalDate, Boolean), Int],
+//                   overduePaymentExists: Boolean,
+//                   overDueUpdatesCount: Option[Int],
+//                   dunningLockExists: Boolean,
+//                   currentTaxYear: Int)
+//                  (implicit request: Request[_], user: MtdItUser[_]): Html = {
+//    home(
+//      nextPaymentDueDate = nextPaymentDueDate,
+//      nextUpdate = nextUpdate,
+//      overDuePaymentsCount = overDuePaymentsCount,
+//      nextPaymentOrOverdue = nextPaymentOrOverdue,
+//      nextUpdateOrOverdue = nextUpdateOrOverdue,
+//      overduePaymentExists = overduePaymentExists,
+//      overDueUpdatesCount = overDueUpdatesCount,
+//      utr = user.saUtr,
+//      ITSASubmissionIntegrationEnabled = isEnabled(ITSASubmissionIntegration),
+//      paymentHistoryEnabled = isEnabled(PaymentHistory),
+//      implicitDateFormatter = dateFormatter,
+//      dunningLockExists = dunningLockExists,
+//      currentTaxYear = currentTaxYear,
+//      isAgent = true
+//     )
+//  }
 
+  private def getOverDuePaymentsCount(dueChargesDetails: Option[Either[(LocalDate, Boolean), Int]]): Int = {
+    dueChargesDetails match {
+      case Some(deets) => deets match {
+        case Right(size) => size
+        case Left((_, isOverdue)) => if (isOverdue) 1 else 0
+      }
+      case None => 0
+    }
+  }
 
   def show(): Action[AnyContent] = Authenticated.async { implicit request =>
     implicit user =>
@@ -95,8 +104,32 @@ class HomeController @Inject()(home: views.html.Home,
             mtdItUser, dueChargesDetails, dueObligationDetails
           ))
         }
-        Ok(view(Some(LocalDate.of(2018, 3, 29)),LocalDate.of(2018, 3, 29),Some(1),dueChargesDetails, dueObligationDetails, overduePaymentExists(dueChargesDetails), Some(1),dunningLockExistsValue,
-          currentTaxYear = mtdItUser.incomeSources.getCurrentTaxEndYear)(implicitly, mtdItUser))
+        Ok(home(
+          nextPaymentDueDate = None,
+          nextUpdate = LocalDate.of(2018, 3, 29),
+          overDuePaymentsCount = getOverDuePaymentsCount(dueChargesDetails),
+          nextPaymentOrOverdue = dueChargesDetails,
+          nextUpdateOrOverdue = dueObligationDetails,
+          overduePaymentExists = overduePaymentExists(dueChargesDetails),
+          overDueUpdatesCount = Some(1),
+          utr = mtdItUser.saUtr,
+          ITSASubmissionIntegrationEnabled = isEnabled(ITSASubmissionIntegration),
+          paymentHistoryEnabled = isEnabled(PaymentHistory),
+          implicitDateFormatter = dateFormatter,
+          dunningLockExists = dunningLockExistsValue,
+          currentTaxYear = mtdItUser.incomeSources.getCurrentTaxEndYear,
+          isAgent = true
+        )(implicitly, implicitly, mtdItUser, implicitly))
+//        Ok(view(
+//          nextPaymentDueDate = None,
+//          nextUpdate = LocalDate.of(2018, 3, 29),
+//          overDuePaymentsCount = Some(1),
+//          nextPaymentOrOverdue = dueChargesDetails,
+//          nextUpdateOrOverdue = dueObligationDetails,
+//          overduePaymentExists = overduePaymentExists(dueChargesDetails),
+//          overDueUpdatesCount = Some(1),
+//          dunningLockExists = dunningLockExistsValue,
+//          currentTaxYear = mtdItUser.incomeSources.getCurrentTaxEndYear)(implicitly, mtdItUser))
       }
   }
 

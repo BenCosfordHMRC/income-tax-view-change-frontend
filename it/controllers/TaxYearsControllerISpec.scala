@@ -29,7 +29,7 @@ class TaxYearsControllerISpec extends ComponentSpecBase with FeatureSwitching {
 
       "isAuthorisedUser with an active enrolment and income source has retrieved successfully" when {
 
-        "no firstAccountingPeriodEndDate does not exists for both business and property" should {
+        "no firstAccountingPeriodEndDate does not exist for both business and property" should {
 
           "return 200 OK" in {
 
@@ -42,7 +42,7 @@ class TaxYearsControllerISpec extends ComponentSpecBase with FeatureSwitching {
             verifyIncomeSourceDetailsCall(testMtditid)
 
             res should have(
-              httpStatus(OK)
+              httpStatus(INTERNAL_SERVER_ERROR)
             )
           }
         }

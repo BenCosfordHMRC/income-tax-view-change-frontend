@@ -59,7 +59,7 @@ class TaxYearsControllerSpec extends MockAuthenticationPredicate
 
           lazy val result = TestTaxYearsController.viewTaxYears(fakeRequestWithActiveSession)
 
-          status(result) shouldBe Status.OK
+          status(result) shouldBe Status.INTERNAL_SERVER_ERROR
         }
       }
 

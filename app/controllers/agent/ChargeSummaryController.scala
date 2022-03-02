@@ -52,12 +52,15 @@ class ChargeSummaryController @Inject()(chargeSummaryView: ChargeSummary,
                                          val itvcErrorHandler: AgentItvcErrorHandler)
   extends ClientConfirmedController with ImplicitDateFormatter with FeatureSwitching with I18nSupport {
 
-  private def view(documentDetailWithDueDate: DocumentDetailWithDueDate, chargeHistoryOpt: Option[List[ChargeHistoryModel]], latePaymentInterestCharge: Boolean,
+  private def view(documentDetailWithDueDate: DocumentDetailWithDueDate, documentDetailWithCodingDetails: Option[DocumentDetailWithCodingDetails],
+                   chargeHistoryOpt: Option[List[ChargeHistoryModel]], latePaymentInterestCharge: Boolean,
                    backLocation: Option[String], taxYear: Int, paymentAllocations: List[PaymentsWithChargeType], payments: FinancialDetailsModel,
-                   paymentBreakdown: List[FinancialDetail], paymentAllocationEnabled: Boolean, codingOutEnabled: Boolean)(implicit request: Request[_]): Html = {
+                   paymentBreakdown: List[FinancialDetail], paymentAllocationEnabled: Boolean, codingOutEnabled: Boolean)
+                  (implicit request: Request[_]): Html = {
 
     chargeSummaryView(
       documentDetailWithDueDate = documentDetailWithDueDate,
+      documentDetailWithCodingDetails = documentDetailWithCodingDetails,
       chargeHistory = chargeHistoryOpt.getOrElse(Nil),
       latePaymentInterestCharge = latePaymentInterestCharge,
       backUrl = backUrl(backLocation, taxYear),
@@ -104,7 +107,8 @@ class ChargeSummaryController @Inject()(chargeSummaryView: ChargeSummary,
     val backLocation = user.session.get(SessionKeys.chargeSummaryBackPage)
     val documentDetailWithDueDate: DocumentDetailWithDueDate = chargeDetails.findDocumentDetailByIdWithDueDate(id).get
     val financialDetailsModel = chargeDetails.financialDetails.filter(_.transactionId.contains(id))
-
+    val documentDetailWithCodingDetails: Option[DocumentDetailWithCodingDetails] =
+      chargeDetails.getDocumentDetailWithCodingDetails(documentDetailWithDueDate.documentDetail)
 
     val paymentBreakdown: List[FinancialDetail] =
       if (!isLatePaymentCharge) {
@@ -122,7 +126,7 @@ class ChargeSummaryController @Inject()(chargeSummaryView: ChargeSummary,
 
     getChargeHistory(id, isLatePaymentCharge).map { chargeHistoryOpt =>
       auditChargeSummary(documentDetailWithDueDate, paymentBreakdown, chargeHistoryOpt.getOrElse(List.empty), paymentAllocations, isLatePaymentCharge)
-      Ok(view(documentDetailWithDueDate, chargeHistoryOpt, isLatePaymentCharge, backLocation, taxYear,
+      Ok(view(documentDetailWithDueDate, documentDetailWithCodingDetails, chargeHistoryOpt, isLatePaymentCharge, backLocation, taxYear,
         paymentAllocations = paymentAllocations,
         paymentBreakdown = paymentBreakdown,
         paymentAllocationEnabled = paymentAllocationEnabled,

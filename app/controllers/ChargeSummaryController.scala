@@ -22,11 +22,10 @@ import auth.MtdItUser
 import config.featureswitch._
 import config.{FrontendAppConfig, ItvcErrorHandler}
 import connectors.IncomeTaxViewChangeConnector
-import controllers.predicates.{AuthenticationPredicate, BtaNavBarPredicate, IncomeSourceDetailsPredicate, NinoPredicate, SessionTimeoutPredicate}
+import controllers.predicates._
 import forms.utils.SessionKeys
-import javax.inject.Inject
 import models.chargeHistory.{ChargeHistoryModel, ChargeHistoryResponseModel, ChargesHistoryModel}
-import models.financialDetails.{BalanceDetails, DocumentDetailWithDueDate, FinancialDetail, FinancialDetailsErrorModel, FinancialDetailsModel, PaymentsWithChargeType}
+import models.financialDetails._
 import play.api.Logger
 import play.api.i18n.I18nSupport
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents, Result}
@@ -35,6 +34,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.language.LanguageUtils
 import views.html.ChargeSummary
 
+import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 class ChargeSummaryController @Inject()(authenticate: AuthenticationPredicate,
@@ -83,6 +83,11 @@ class ChargeSummaryController @Inject()(authenticate: AuthenticationPredicate,
     val backLocation = user.session.get(SessionKeys.chargeSummaryBackPage)
     val documentDetailWithDueDate: DocumentDetailWithDueDate = chargeDetails.findDocumentDetailByIdWithDueDate(id).get
     val financialDetails = chargeDetails.financialDetails.filter(_.transactionId.contains(id))
+    val documentDetailWithCodingDetails: Option[DocumentDetailWithCodingDetails] =
+      chargeDetails.getDocumentDetailWithCodingDetails(documentDetailWithDueDate.documentDetail)
+    val codingDetails: Option[CodingDetails] = documentDetailWithCodingDetails.map(ddcd => ddcd.codingDetails)
+
+    if(codingDetails.isDefined) {codingDetails.get.amountCodedOut}
 
     val paymentBreakdown: List[FinancialDetail] =
       if (!isLatePaymentCharge) {
@@ -100,6 +105,7 @@ class ChargeSummaryController @Inject()(authenticate: AuthenticationPredicate,
         auditChargeSummary(id, chargeDetails, paymentBreakdown, chargeHistory, paymentAllocations, isLatePaymentCharge)
         Ok(chargeSummaryView(
           documentDetailWithDueDate = documentDetailWithDueDate,
+          documentDetailWithCodingDetails = documentDetailWithCodingDetails,
           backUrl = backUrl(backLocation, taxYear),
           paymentBreakdown = paymentBreakdown,
           chargeHistory = chargeHistory,

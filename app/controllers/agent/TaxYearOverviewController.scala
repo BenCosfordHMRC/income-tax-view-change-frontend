@@ -24,7 +24,7 @@ import config.{AgentItvcErrorHandler, FrontendAppConfig}
 import controllers.agent.predicates.ClientConfirmedController
 import controllers.agent.utils.SessionKeys
 import implicits.ImplicitDateFormatter
-import models.financialDetails.{DocumentDetailWithDueDate, FinancialDetailsErrorModel, FinancialDetailsModel}
+import models.financialDetails.{DocumentDetailWithCodingDetails, DocumentDetailWithDueDate, FinancialDetailsErrorModel, FinancialDetailsModel}
 import models.liabilitycalculation.viewmodels.TaxYearOverviewViewModel
 import models.liabilitycalculation.{LiabilityCalculationError, LiabilityCalculationResponse, LiabilityCalculationResponseModel}
 import models.nextUpdates.ObligationsModel
@@ -62,10 +62,11 @@ class TaxYearOverviewController @Inject()(taxYearOverview: TaxYearOverview,
   def show(taxYear: Int): Action[AnyContent] = Authenticated.async { implicit request =>
     implicit user =>
       getMtdItUserWithIncomeSources(incomeSourceDetailsService, useCache = false) flatMap { implicit mtdItUser =>
-        withTaxYearFinancials(taxYear) { documentDetailsWithDueDates =>
+        withTaxYearFinancials(taxYear) { (documentDetailsWithDueDates, documentDetailsWithDueDatesCodingOutPaye) =>
           withObligationsModel(taxYear) { obligations =>
             calculationService.getLiabilityCalculationDetail(getClientMtditid, getClientNino, taxYear).map { liabilityCalcResponse =>
-              view(liabilityCalcResponse, documentDetailsWithDueDates, taxYear, obligations, getBackURL(request.headers.get(REFERER)))
+              view(liabilityCalcResponse, documentDetailsWithDueDates, taxYear, obligations, getBackURL(request.headers.get(REFERER)),
+                documentDetailsWithDueDatesCodingOutPaye)
                 .addingToSession(SessionKeys.chargeSummaryBackPage -> "taxYearOverview")(request)
             }
           }
@@ -85,7 +86,8 @@ class TaxYearOverviewController @Inject()(taxYearOverview: TaxYearOverview,
                    documentDetailsWithDueDates: List[DocumentDetailWithDueDate],
                    taxYear: Int,
                    obligations: ObligationsModel,
-                   backUrl: String
+                   backUrl: String,
+                   documentDetailsWithDueDatesCodingOutPaye: List[DocumentDetailWithCodingDetails]
                   )(implicit mtdItUser: MtdItUser[_]): Result = {
     liabilityCalc match {
       case liabilityCalc: LiabilityCalculationResponse =>
@@ -103,7 +105,8 @@ class TaxYearOverviewController @Inject()(taxYearOverview: TaxYearOverview,
           obligations = obligations,
           codingOutEnabled = isEnabled(CodingOut),
           backUrl = backUrl,
-          isAgent = true
+          isAgent = true,
+          documentDetailsWithDueDatesCodingOutPaye= documentDetailsWithDueDatesCodingOutPaye
         ))
       case error: LiabilityCalculationError if error.status == NOT_FOUND =>
         auditingService.extendedAudit(TaxYearOverviewResponseAuditModel(
@@ -119,7 +122,8 @@ class TaxYearOverviewController @Inject()(taxYearOverview: TaxYearOverview,
           obligations = obligations,
           codingOutEnabled = isEnabled(CodingOut),
           backUrl = backUrl,
-          isAgent = true
+          isAgent = true,
+          documentDetailsWithDueDatesCodingOutPaye= documentDetailsWithDueDatesCodingOutPaye
         ))
       case _: LiabilityCalculationError =>
         Logger("application").error(
@@ -128,7 +132,7 @@ class TaxYearOverviewController @Inject()(taxYearOverview: TaxYearOverview,
     }
   }
 
-  private def withTaxYearFinancials(taxYear: Int)(f: List[DocumentDetailWithDueDate] => Future[Result])(implicit user: MtdItUser[_]): Future[Result] = {
+  private def withTaxYearFinancials(taxYear: Int)(f: (List[DocumentDetailWithDueDate], List[DocumentDetailWithCodingDetails]) => Future[Result])(implicit user: MtdItUser[_]): Future[Result] = {
     financialDetailsService.getFinancialDetails(taxYear, user.nino) flatMap {
       case financialDetails@FinancialDetailsModel(_, _, documentDetails, _) =>
         val docDetailsNoPayments = documentDetails.filter(_.paymentLot.isEmpty)
@@ -143,18 +147,19 @@ class TaxYearOverviewController @Inject()(taxYearOverview: TaxYearOverview,
             documentDetail => DocumentDetailWithDueDate(documentDetail, documentDetail.interestEndDate, isLatePaymentInterest = true,
               dunningLock = financialDetails.dunningLockExists(documentDetail.transactionId)))
         }
-        val documentDetailsWithDueDatesCodingOutPaye: List[DocumentDetailWithDueDate] = {
-          docDetailsCodingOut.filter(dd => dd.isPayeSelfAssessment && dd.amountCodedOutIsNotZero).map(
-            documentDetail => DocumentDetailWithDueDate(documentDetail, financialDetails.getDueDateFor(documentDetail),
-              dunningLock = financialDetails.dunningLockExists(documentDetail.transactionId)))
+        val documentDetailsWithDueDatesCodingOutPaye: List[DocumentDetailWithCodingDetails] = {
+          docDetailsCodingOut.filter(dd => dd.isPayeSelfAssessment
+            && financialDetails.getDocumentDetailWithCodingDetails(dd).exists(_.codingDetails.amountCodedOut > 0)).flatMap(
+            documentDetail => financialDetails.getDocumentDetailWithCodingDetails(documentDetail)
+          )
         }
         val documentDetailsWithDueDatesCodingOut: List[DocumentDetailWithDueDate] = {
           docDetailsCodingOut.filter(dd => !dd.isPayeSelfAssessment && dd.originalAmountIsNotZero).map(
             documentDetail => DocumentDetailWithDueDate(documentDetail, financialDetails.getDueDateFor(documentDetail),
               dunningLock = financialDetails.dunningLockExists(documentDetail.transactionId)))
         }
-        f(documentDetailsWithDueDates ++ documentDetailsWithDueDatesForLpi ++ documentDetailsWithDueDatesCodingOutPaye ++ documentDetailsWithDueDatesCodingOut)
-      case FinancialDetailsErrorModel(NOT_FOUND, _) => f(List.empty)
+        f(documentDetailsWithDueDates ++ documentDetailsWithDueDatesForLpi ++ documentDetailsWithDueDatesCodingOut, documentDetailsWithDueDatesCodingOutPaye)
+      case FinancialDetailsErrorModel(NOT_FOUND, _) => f(List.empty, List.empty)
       case _ =>
         Logger("application").error(s"[TaxYearOverviewController][withTaxYearFinancials] - Could not retrieve financial details for year: $taxYear")
         Future.successful(itvcErrorHandler.showInternalServerError())

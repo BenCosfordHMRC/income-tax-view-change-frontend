@@ -18,6 +18,7 @@
 @import java.time.LocalDate
 @import models.nextUpdates.ObligationsModel
 @import models.financialDetails.DocumentDetailWithDueDate
+@import models.financialDetails.DocumentDetailWithCodingDetails
 @import implicits.ImplicitDateFormatterImpl
 @import views.html.partials.taxOverviewBreakdownPartial
 @import views.html.layouts.unifiedLayout
@@ -37,7 +38,8 @@
 )
 
 @(taxYear: Int, overviewOpt: Option[TaxYearOverviewViewModel], charges: List[DocumentDetailWithDueDate],
-        obligations: ObligationsModel, backUrl: String, isAgent: Boolean = false, codingOutEnabled: Boolean
+        obligations: ObligationsModel, backUrl: String, isAgent: Boolean = false, codingOutEnabled: Boolean,
+        documentDetailsWithDueDatesCodingOutPaye: List[DocumentDetailWithCodingDetails]
         )(implicit request: Request[_], messages: Messages, user: auth.MtdItUser[_])
 
 @import implicitDateFormatter._
@@ -117,7 +119,25 @@
                         <td class="govuk-table__cell">@documentDetailWithDueDate.documentDetail.originalAmount.getOrElse(throw MissingFieldException("Original Amount")).toCurrencyString</td>
                 }
             </tr>
+
         }
+@* TODO this should be finished and rewrite .head *@
+            @if(documentDetailsWithDueDatesCodingOutPaye.nonEmpty) {
+                <tr class="govuk-table__row">
+                    <td class="govuk-table__cell">@messages("tax-year-overview.payments.codingOut.text")</td>
+                    <td class="govuk-table__cell">
+                    @{
+                        documentDetailsWithDueDatesCodingOutPaye.head.codingDetails.taxYearReturn
+                    }
+                    </td>
+                    <td class="govuk-table__cell">@messages("tax-year-overview.paye-tax-code")</td>
+                    <td class="govuk-table__cell">
+                    @{
+                        documentDetailsWithDueDatesCodingOutPaye.head.codingDetails.amountCodedOut.toCurrencyString
+                    }
+                    </td>
+                </tr>
+            }
         </tbody>
     </table>
 }

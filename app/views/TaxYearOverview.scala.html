@@ -110,7 +110,7 @@
                 } else if(codingOutEnabled && documentDetailWithDueDate.documentDetail.isPayeSelfAssessment) {
                         <td class="govuk-table__cell">@messages("tax-year-overview.na")</td>
                         <td class="govuk-table__cell">@messages("tax-year-overview.paye-tax-code")</td>
-                        <td class="govuk-table__cell">@documentDetailWithDueDate.documentDetail.amountCodedOut.getOrElse(throw MissingFieldException("Amount Coded Out")).toCurrencyString</td>
+                        <td class="govuk-table__cell">@documentDetailWithDueDate.documentDetail map amountCodedOut.getOrElse(throw MissingFieldException("Amount Coded Out")).toCurrencyString</td>
                 } else {
                         <td class="govuk-table__cell">@documentDetailWithDueDate.dueDate.getOrElse(throw MissingFieldException("Due Date")).toLongDateShort</td>
                         <td class="govuk-table__cell">@messages(s"tax-year-overview.payments.${documentDetailWithDueDate.documentDetail.getChargePaidStatus}")</td>
@@ -204,7 +204,7 @@
                     @messages("tax-year-overview.total-due")
                 } else {
                     @{
-                        messages("tax-year-overview.tax-calculation.in-year", s"${taxYear - 1}", s"$taxYear")
+                        messages("tax-year-overview.tax-calculation.date", s"${taxYear - 1}", s"$taxYear")
                     }
                 }
                 </dt>

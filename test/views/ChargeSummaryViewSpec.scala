@@ -48,8 +48,9 @@ class ChargeSummaryViewSpec extends ViewSpec {
               paymentAllocationEnabled: Boolean = false,
               latePaymentInterestCharge: Boolean = false,
               codingOutEnabled: Boolean = false,
-              isAgent: Boolean = false) {
-    val view: Html = chargeSummary(DocumentDetailWithDueDate(documentDetail, dueDate), "testBackURL",
+              isAgent: Boolean = false,
+              amountCodedOut: Option[BigDecimal] = None) {
+    val view: Html = chargeSummary(DocumentDetailWithDueDate(documentDetail, dueDate), amountCodedOut, "testBackURL",
       paymentBreakdown, chargeHistory, paymentAllocations, payments, chargeHistoryEnabled, paymentAllocationEnabled, latePaymentInterestCharge, codingOutEnabled, isAgent)
     val document: Document = Jsoup.parse(view.toString())
 
@@ -636,7 +637,7 @@ class ChargeSummaryViewSpec extends ViewSpec {
       "display the coded out details" when {
         val documentDetailCodingOut = documentDetailModel(transactionId = "CODINGOUT02",
           documentDescription = Some("TRM New Charge"), documentText = Some("PAYE Self Assessment"), outstandingAmount = Some(2500.00),
-          originalAmount = Some(2500.00))
+          originalAmount = Some(1234.00))
         object CodingOutMessages {
           val header = "Tax year 6 April 2017 to 5 April 2018 Balancing payment collected through PAYE tax code"
           val insetPara = "If this tax cannot be collected through your PAYE tax code (opens in new tab) for any reason, you will need to pay the remaining amount. You will have 42 days to make this payment before you may charged interest and penalties."
@@ -645,7 +646,7 @@ class ChargeSummaryViewSpec extends ViewSpec {
           val remainingText = "Collected through your PAYE tax code for 2017 to 2018 tax year"
           val payHistoryLine1 = "29 Mar 2018 Amount collected through your PAYE tax code for 2017 to 2018 tax year £2,500.00"
         }
-        "Coding Out is Enabled" in new Setup(documentDetailCodingOut, codingOutEnabled = true) {
+        "Coding Out is Enabled" in new Setup(documentDetailCodingOut, codingOutEnabled = true, amountCodedOut = Some(2500.00)) {
           document.select("h1").text() shouldBe CodingOutMessages.header
           document.select("#check-paye-para").text() shouldBe Messages.payeTaxCodeText(2018)
           document.select("#paye-tax-code-link").attr("href") shouldBe Messages.payeTaxCodeLink
@@ -669,7 +670,7 @@ class ChargeSummaryViewSpec extends ViewSpec {
           val noticeLink = "https://www.gov.uk/pay-self-assessment-tax-bill/through-your-tax-code"
           val codingOutRemainingToPay = "(Collected through your PAYE tax code for 2017 to 2018 tax year)"
         }
-        "Coding Out is Enabled" in new Setup(documentDetailCodingOut, codingOutEnabled = true) {
+        "Coding Out is Enabled" in new Setup(documentDetailCodingOut, codingOutEnabled = true, amountCodedOut = Some(2500.00)) {
           document.select("h1").text() shouldBe CodingOutMessages.header
           document.select("#coding-out-notice").text() shouldBe CodingOutMessages.insetPara
           document.select("#coding-out-message").text() shouldBe CodingOutMessages.summaryMessage
@@ -701,7 +702,7 @@ class ChargeSummaryViewSpec extends ViewSpec {
   "The charge summary view when missing mandatory expected fields" should {
     "throw a MissingFieldException" in {
       val thrownException = intercept[MissingFieldException] {
-        chargeSummary(DocumentDetailWithDueDate(documentDetailModel(), None), "testBackURL",
+        chargeSummary(DocumentDetailWithDueDate(documentDetailModel(), None), None, "testBackURL",
           paymentBreakdown, List(), List(), payments, true, false, false, false, false)
       }
       thrownException.getMessage shouldBe "Missing Mandatory Expected Field: Due Date"

@@ -78,16 +78,14 @@ class ChargeSummaryController @Inject()(authenticate: AuthenticationPredicate,
         }
     }
 
-  private def doShowChargeSummary(taxYear: Int, id: String, isLatePaymentCharge: Boolean, chargeDetails: FinancialDetailsModel, payments: FinancialDetailsModel)
+  private def doShowChargeSummary(taxYear: Int, id: String, isLatePaymentCharge: Boolean, fdm: FinancialDetailsModel, payments: FinancialDetailsModel)
                                  (implicit user: MtdItUser[_]): Future[Result] = {
     val backLocation = user.session.get(SessionKeys.chargeSummaryBackPage)
-    val documentDetailWithDueDate: DocumentDetailWithDueDate = chargeDetails.findDocumentDetailByIdWithDueDate(id).get
-    val financialDetails = chargeDetails.financialDetails.filter(_.transactionId.contains(id))
+    val documentDetailWithDueDate: DocumentDetailWithDueDate = fdm.findDocumentDetailByIdWithDueDate(id).get
+    val financialDetails = fdm.financialDetails.filter(_.transactionId.contains(id))
     val documentDetailWithCodingDetails: Option[DocumentDetailWithCodingDetails] =
-      chargeDetails.getDocumentDetailWithCodingDetails(documentDetailWithDueDate.documentDetail)
+      fdm.getDocumentDetailWithCodingDetails(documentDetailWithDueDate.documentDetail)
     val codingDetails: Option[CodingDetails] = documentDetailWithCodingDetails.map(ddcd => ddcd.codingDetails)
-
-    if(codingDetails.isDefined) {codingDetails.get.amountCodedOut}
 
     val paymentBreakdown: List[FinancialDetail] =
       if (!isLatePaymentCharge) {
@@ -102,10 +100,10 @@ class ChargeSummaryController @Inject()(authenticate: AuthenticationPredicate,
 
     chargeHistoryResponse(isLatePaymentCharge, documentDetailWithDueDate.documentDetail.isPayeSelfAssessment, id).map {
       case Right(chargeHistory) =>
-        auditChargeSummary(id, chargeDetails, paymentBreakdown, chargeHistory, paymentAllocations, isLatePaymentCharge)
+        auditChargeSummary(id, fdm, paymentBreakdown, chargeHistory, paymentAllocations, isLatePaymentCharge)
         Ok(chargeSummaryView(
           documentDetailWithDueDate = documentDetailWithDueDate,
-          documentDetailWithCodingDetails = documentDetailWithCodingDetails,
+          amountCodedOut = codingDetails.flatMap(cd => if (cd.amountCodedOut == 0) None else Some(cd.amountCodedOut)),
           backUrl = backUrl(backLocation, taxYear),
           paymentBreakdown = paymentBreakdown,
           chargeHistory = chargeHistory,

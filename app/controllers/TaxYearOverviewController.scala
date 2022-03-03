@@ -23,7 +23,7 @@ import config.featureswitch.{CodingOut, FeatureSwitching}
 import config.{FrontendAppConfig, ItvcErrorHandler}
 import controllers.predicates._
 import forms.utils.SessionKeys
-import models.financialDetails.{DocumentDetailWithCodingDetails, DocumentDetailWithDueDate, FinancialDetailsErrorModel, FinancialDetailsModel}
+import models.financialDetails.{CodingDetails, DocumentDetail, DocumentDetailWithCodingDetails, DocumentDetailWithDueDate, FinancialDetailsErrorModel, FinancialDetailsModel}
 import models.liabilitycalculation.viewmodels.TaxYearOverviewViewModel
 import models.liabilitycalculation.{LiabilityCalculationError, LiabilityCalculationResponse, LiabilityCalculationResponseModel}
 import models.nextUpdates.ObligationsModel
@@ -168,7 +168,21 @@ class TaxYearOverviewController @Inject()(taxYearOverviewView: TaxYearOverview,
             calculationService.getLiabilityCalculationDetail(user.mtditid, user.nino, taxYear).map { liabilityCalcResponse =>
               view(liabilityCalcResponse, charges, taxYear, obligationsModel, codingOutEnabled,
                 backUrl = getBackURL(user.headers.get(REFERER)), documentDetailsWithDueDatesCodingOutPaye = documentDetailWithCodingDetails)
-                .addingToSession(SessionKeys.chargeSummaryBackPage -> "taxYearOverview")
+              // todo remove it when testing is done
+                /*backUrl = getBackURL(user.headers.get(REFERER)), documentDetailsWithDueDatesCodingOutPaye =
+                  List(DocumentDetailWithCodingDetails(DocumentDetail(
+                    taxYear = "2022",
+                    transactionId = "testTransactionId",
+                    documentDescription = Some("TRM New Charge"),
+                    documentText = Some("Class 2 National Insurance"),
+                    documentDate = LocalDate.of(2021, 8, 13),
+                    originalAmount = Some(1000.00),
+                    outstandingAmount = Some(500.00),
+                    interestOutstandingAmount = Some(0.00),
+                    interestEndDate = Some(LocalDate.of(2021, 6, 24)),
+                    latePaymentInterestAmount = Some(0)
+                  ), CodingDetails("2021", BigDecimal("100.00"), "2022"))))
+                .addingToSession(SessionKeys.chargeSummaryBackPage -> "taxYearOverview")*/
             }
           case _ => Future.successful(itvcErrorHandler.showInternalServerError())
         }

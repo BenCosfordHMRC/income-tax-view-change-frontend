@@ -19,6 +19,7 @@
 @import models.nextUpdates.ObligationsModel
 @import models.financialDetails.DocumentDetailWithDueDate
 @import models.financialDetails.DocumentDetailWithCodingDetails
+@import models.financialDetails.DocumentDetail
 @import implicits.ImplicitDateFormatterImpl
 @import views.html.partials.taxOverviewBreakdownPartial
 @import views.html.layouts.unifiedLayout
@@ -76,6 +77,14 @@
     }
 }
 
+@getChargeSummaryWithCodingOutPayeHref(documentDetail: DocumentDetail, isLatePaymentCharge: Boolean = false) = @{
+    if(isAgent){
+        controllers.agent.routes.ChargeSummaryController.showChargeSummary(taxYear, documentDetail.transactionId, isLatePaymentCharge).url
+    } else {
+        controllers.routes.ChargeSummaryController.showChargeSummary(taxYear, documentDetail.transactionId, isLatePaymentCharge).url
+    }
+}
+
 @paymentsContent = {
 @h2(msg = messages("tax-year-overview.payments"), classes = "govuk-heading-l")
 @if(charges.isEmpty){
@@ -119,16 +128,19 @@
                         <td class="govuk-table__cell">@documentDetailWithDueDate.documentDetail.originalAmount.getOrElse(throw MissingFieldException("Original Amount")).toCurrencyString</td>
                 }
             </tr>
-
         }
-@* TODO this should be finished and rewrite .head *@
+            @* TODO this should be finished and rewrite .head *@
             @if(documentDetailsWithDueDatesCodingOutPaye.nonEmpty) {
                 <tr class="govuk-table__row">
-                    <td class="govuk-table__cell">@messages("tax-year-overview.payments.codingOut.text")</td>
                     <td class="govuk-table__cell">
-                    @{
-                        documentDetailsWithDueDatesCodingOutPaye.head.codingDetails.taxYearReturn
-                    }
+                        <div>
+                            <a class="govuk-link"  id="paymentTypeLink-@{3}" href="@getChargeSummaryWithCodingOutPayeHref(documentDetailsWithDueDatesCodingOutPaye.head.documentDetail)">@messages("tax-year-overview.payments.codingOut.text")</a>
+                        </div>
+                    </td>
+                    <td>
+                        @{
+                            documentDetailsWithDueDatesCodingOutPaye.head.codingDetails.taxYearReturn
+                        }
                     </td>
                     <td class="govuk-table__cell">@messages("tax-year-overview.paye-tax-code")</td>
                     <td class="govuk-table__cell">

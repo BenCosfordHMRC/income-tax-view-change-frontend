@@ -23,7 +23,7 @@ import controllers.predicates.{BtaNavBarPredicate, NinoPredicate, SessionTimeout
 import forms.utils.SessionKeys
 import mocks.controllers.predicates.{MockAuthenticationPredicate, MockIncomeSourceDetailsPredicateNoCache}
 import mocks.services.{MockCalculationService, MockFinancialDetailsService, MockNextUpdatesService}
-import models.financialDetails.DocumentDetailWithDueDate
+import models.financialDetails.{CodingDetails, DocumentDetailWithCodingDetails, DocumentDetailWithDueDate}
 import models.liabilitycalculation.viewmodels.TaxYearOverviewViewModel
 import models.nextUpdates.{NextUpdatesErrorModel, ObligationsModel}
 import org.jsoup.Jsoup
@@ -74,6 +74,9 @@ class TaxYearOverviewControllerSpec extends TestSupport with MockCalculationServ
   val taxYearsRefererBackLink: String = "http://www.somedomain.org/report-quarterly/income-and-expenses/view/tax-years"
   val taxYearsBackLink: String = "/report-quarterly/income-and-expenses/view/tax-years"
   val homeBackLink: String = "/report-quarterly/income-and-expenses/view"
+  val documentDetailsWithDueDatesCodingOutPaye: List[DocumentDetailWithCodingDetails] = List(
+    DocumentDetailWithCodingDetails(documentDetailPaye.documentDetail, CodingDetails("2021", BigDecimal("100.00"), "2020"))
+  )
 
   "The TaxYearOverview.renderTaxYearOverviewPage(year) action" when {
     "all calls are returned correctly" should {
@@ -93,7 +96,8 @@ class TaxYearOverviewControllerSpec extends TestSupport with MockCalculationServ
           testChargesList,
           testObligtionsModel,
           taxYearsBackLink,
-          codingOutEnabled = true
+          codingOutEnabled = true,
+          documentDetailsWithDueDatesCodingOutPaye = List.empty
         ).toString
 
         val result = TestTaxYearOverviewController.renderTaxYearOverviewPage(testTaxYear)(fakeRequestWithActiveSessionWithReferer(referer = taxYearsBackLink))
@@ -122,7 +126,8 @@ class TaxYearOverviewControllerSpec extends TestSupport with MockCalculationServ
           testChargesList,
           testObligtionsModel,
           homeBackLink,
-          codingOutEnabled = true
+          codingOutEnabled = true,
+          documentDetailsWithDueDatesCodingOutPaye = List.empty
         ).toString
 
         val result = TestTaxYearOverviewController.renderTaxYearOverviewPage(testTaxYear)(fakeRequestWithActiveAndRefererToHomePage)
@@ -157,7 +162,8 @@ class TaxYearOverviewControllerSpec extends TestSupport with MockCalculationServ
           class2NicsChargesList,
           testObligtionsModel,
           taxYearsBackLink,
-          codingOutEnabled = true
+          codingOutEnabled = true,
+          documentDetailsWithDueDatesCodingOutPaye = documentDetailsWithDueDatesCodingOutPaye
         ).toString
 
         val result = TestTaxYearOverviewController.renderTaxYearOverviewPage(testTaxYear)(fakeRequestWithActiveSessionWithReferer(referer = taxYearsBackLink))
@@ -188,7 +194,8 @@ class TaxYearOverviewControllerSpec extends TestSupport with MockCalculationServ
           payeChargesList,
           testObligtionsModel,
           taxYearsBackLink,
-          codingOutEnabled = true
+          codingOutEnabled = true,
+          documentDetailsWithDueDatesCodingOutPaye = documentDetailsWithDueDatesCodingOutPaye
         ).toString
 
         val result = TestTaxYearOverviewController.renderTaxYearOverviewPage(testTaxYear)(fakeRequestWithActiveSessionWithReferer(referer = taxYearsBackLink))
@@ -221,7 +228,8 @@ class TaxYearOverviewControllerSpec extends TestSupport with MockCalculationServ
           testEmptyChargesList,
           testObligtionsModel,
           taxYearsBackLink,
-          codingOutEnabled = true
+          codingOutEnabled = true,
+          documentDetailsWithDueDatesCodingOutPaye = documentDetailsWithDueDatesCodingOutPaye
         ).toString
 
         val result = TestTaxYearOverviewController.renderTaxYearOverviewPage(testTaxYear)(fakeRequestWithActiveSessionWithReferer(referer = taxYearsBackLink))
@@ -252,7 +260,8 @@ class TaxYearOverviewControllerSpec extends TestSupport with MockCalculationServ
           testEmptyChargesList,
           testObligtionsModel,
           taxYearsBackLink,
-          codingOutEnabled = true
+          codingOutEnabled = true,
+          documentDetailsWithDueDatesCodingOutPaye = documentDetailsWithDueDatesCodingOutPaye
         ).toString
 
         val result = TestTaxYearOverviewController.renderTaxYearOverviewPage(testTaxYear)(fakeRequestWithActiveSessionWithReferer(referer = taxYearsBackLink))
@@ -280,7 +289,8 @@ class TaxYearOverviewControllerSpec extends TestSupport with MockCalculationServ
           testEmptyChargesList,
           testObligtionsModel,
           taxYearsBackLink,
-          codingOutEnabled = true
+          codingOutEnabled = true,
+          documentDetailsWithDueDatesCodingOutPaye = List.empty
         ).toString
 
         val result = TestTaxYearOverviewController.renderTaxYearOverviewPage(testTaxYear)(fakeRequestWithActiveSessionWithReferer(referer = taxYearsBackLink))
@@ -357,7 +367,8 @@ class TaxYearOverviewControllerSpec extends TestSupport with MockCalculationServ
             testChargesList,
             testObligtionsModel,
             taxYearsBackLink,
-            codingOutEnabled = true
+            codingOutEnabled = true,
+            documentDetailsWithDueDatesCodingOutPaye = List.empty
           ).toString()).text()
 
           val result = TestTaxYearOverviewController.renderTaxYearOverviewPage(testTaxYear)(fakeRequestWithActiveSessionWithReferer(referer = taxYearsBackLink))

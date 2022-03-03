@@ -21,7 +21,7 @@ import config.featureswitch.{CodingOut, FeatureSwitching}
 import mocks.MockItvcErrorHandler
 import mocks.auth.MockFrontendAuthorisedFunctions
 import mocks.services.{MockCalculationService, MockFinancialDetailsService, MockIncomeSourceDetailsService, MockNextUpdatesService}
-import models.financialDetails.DocumentDetailWithDueDate
+import models.financialDetails.{CodingDetails, DocumentDetailWithCodingDetails, DocumentDetailWithDueDate}
 import models.liabilitycalculation.viewmodels.TaxYearOverviewViewModel
 import models.nextUpdates.{NextUpdatesErrorModel, ObligationsModel}
 import play.api.http.Status.{INTERNAL_SERVER_ERROR, OK, SEE_OTHER}
@@ -58,6 +58,9 @@ class TaxYearOverviewControllerSpec extends TestSupport with MockFrontendAuthori
     val testObligtionsModel: ObligationsModel = ObligationsModel(Nil)
     val homeBackLink: String = "/report-quarterly/income-and-expenses/view/agents/income-tax-account"
     val taxYearsBackLink: String = "/report-quarterly/income-and-expenses/view/agents/tax-years"
+    val documentDetailsWithDueDatesCodingOutPaye: List[DocumentDetailWithCodingDetails] = List(
+      DocumentDetailWithCodingDetails(documentDetailPaye.documentDetail, CodingDetails("2019", BigDecimal("100.00"), "2020"))
+    )
 
     val controller: TaxYearOverviewController = new TaxYearOverviewController(
       taxYearOverview = taxYearOverviewView,
@@ -218,7 +221,8 @@ class TaxYearOverviewControllerSpec extends TestSupport with MockFrontendAuthori
         testObligtionsModel,
         taxYearsBackLink,
         isAgent = true,
-        codingOutEnabled = true
+        codingOutEnabled = true,
+        documentDetailsWithDueDatesCodingOutPaye = documentDetailsWithDueDatesCodingOutPaye
       ).toString
 
       val result: Future[Result] = controller.show(taxYear = testYear)(fakeRequestConfirmedClientWithReferer(referer = taxYearsBackLink))
@@ -248,7 +252,8 @@ class TaxYearOverviewControllerSpec extends TestSupport with MockFrontendAuthori
         testObligtionsModel,
         taxYearsBackLink,
         isAgent = true,
-        codingOutEnabled = true
+        codingOutEnabled = true,
+        documentDetailsWithDueDatesCodingOutPaye = documentDetailsWithDueDatesCodingOutPaye
       ).toString
 
       val result: Future[Result] = controller.show(taxYear = testYear)(fakeRequestConfirmedClientWithReferer(referer = taxYearsBackLink))
@@ -280,7 +285,8 @@ class TaxYearOverviewControllerSpec extends TestSupport with MockFrontendAuthori
         testObligtionsModel,
         taxYearsBackLink,
         isAgent = true,
-        codingOutEnabled = true
+        codingOutEnabled = true,
+        documentDetailsWithDueDatesCodingOutPaye = documentDetailsWithDueDatesCodingOutPaye
       ).toString
 
       val result: Future[Result] = controller.show(taxYear = testYear)(fakeRequestConfirmedClientWithReferer(referer = taxYearsBackLink))
@@ -310,7 +316,8 @@ class TaxYearOverviewControllerSpec extends TestSupport with MockFrontendAuthori
         testObligtionsModel,
         taxYearsBackLink,
         isAgent = true,
-        codingOutEnabled = true
+        codingOutEnabled = true,
+        documentDetailsWithDueDatesCodingOutPaye = documentDetailsWithDueDatesCodingOutPaye
       ).toString
 
       val result: Future[Result] = controller.show(taxYear = testYear)(fakeRequestConfirmedClientWithReferer(referer = taxYearsBackLink))
@@ -342,7 +349,8 @@ class TaxYearOverviewControllerSpec extends TestSupport with MockFrontendAuthori
         testObligtionsModel,
         homeBackLink,
         isAgent = true,
-        codingOutEnabled = true
+        codingOutEnabled = true,
+        documentDetailsWithDueDatesCodingOutPaye = documentDetailsWithDueDatesCodingOutPaye
       ).toString
 
       val result: Future[Result] = controller.show(taxYear = testYear)(fakeRequestConfirmedClientWithReferer(referer = homeBackLink))

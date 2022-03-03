@@ -20,12 +20,12 @@ import config.featureswitch.FeatureSwitching
 import exceptions.MissingFieldException
 import implicits.ImplicitCurrencyFormatter.{CurrencyFormatter, CurrencyFormatterInt}
 import implicits.ImplicitDateFormatterImpl
-import models.financialDetails.DocumentDetailWithDueDate
+import models.financialDetails.{CodingDetails, DocumentDetailWithCodingDetails, DocumentDetailWithDueDate}
 import models.liabilitycalculation.viewmodels.TaxYearOverviewViewModel
 import models.nextUpdates.{NextUpdateModelWithIncomeType, ObligationsModel}
 import org.jsoup.nodes.Element
 import play.twirl.api.Html
-import testConstants.FinancialDetailsTestConstants.{fullDocumentDetailModel, fullDocumentDetailWithDueDateModel}
+import testConstants.FinancialDetailsTestConstants.{documentDetailPaye, fullDocumentDetailModel, fullDocumentDetailWithDueDateModel}
 import testConstants.NextUpdatesTestConstants._
 import testUtils.ViewSpec
 import views.html.TaxYearOverview
@@ -108,6 +108,10 @@ class TaxYearOverviewViewSpec extends ViewSpec with FeatureSwitching {
 
   val emptyChargeList: List[DocumentDetailWithDueDate] = List.empty
 
+  val documentDetailsWithDueDatesCodingOutPaye: List[DocumentDetailWithCodingDetails] = List(
+    DocumentDetailWithCodingDetails(documentDetailPaye.documentDetail, CodingDetails("2021", BigDecimal("100.00"), "2020"))
+  )
+
   val testWithOneMissingDueDateChargesList: List[DocumentDetailWithDueDate] = List(
     fullDocumentDetailWithDueDateModel.copy(dueDate = None),
     fullDocumentDetailWithDueDateModel
@@ -120,31 +124,40 @@ class TaxYearOverviewViewSpec extends ViewSpec with FeatureSwitching {
   val testObligationsModel: ObligationsModel = ObligationsModel(Seq(nextUpdatesDataSelfEmploymentSuccessModel))
 
   def estimateView(documentDetailsWithDueDates: List[DocumentDetailWithDueDate] = testChargesList, isAgent: Boolean = false): Html = taxYearOverviewView(
-    testYear, Some(completeOverview(false)), documentDetailsWithDueDates, testObligationsModel, "testBackURL", isAgent, codingOutEnabled = false)
+    testYear, Some(completeOverview(false)), documentDetailsWithDueDates, testObligationsModel, "testBackURL", isAgent, codingOutEnabled = false,
+    documentDetailsWithDueDatesCodingOutPaye = List.empty)
 
   def class2NicsView(codingOutEnabled: Boolean, isAgent: Boolean = false): Html = taxYearOverviewView(
-    testYear, Some(completeOverview(false)), class2NicsChargesList, testObligationsModel, "testBackURL", isAgent, codingOutEnabled = codingOutEnabled)
+    testYear, Some(completeOverview(false)), class2NicsChargesList, testObligationsModel, "testBackURL", isAgent, codingOutEnabled = codingOutEnabled,
+    documentDetailsWithDueDatesCodingOutPaye = List.empty)
 
   def estimateViewWithNoCalcData(isAgent: Boolean = false): Html = taxYearOverviewView(
-    testYear, None, testChargesList, testObligationsModel, "testBackURL", isAgent, codingOutEnabled = false)
+    testYear, None, testChargesList, testObligationsModel, "testBackURL", isAgent, codingOutEnabled = false,
+    documentDetailsWithDueDatesCodingOutPaye = List.empty)
 
   def multipleDunningLockView(isAgent: Boolean = false): Html = taxYearOverviewView(
-    testYear, Some(completeOverview(false)), testDunningLockChargesList, testObligationsModel, "testBackURL", isAgent, codingOutEnabled = false)
+    testYear, Some(completeOverview(false)), testDunningLockChargesList, testObligationsModel, "testBackURL", isAgent, codingOutEnabled = false,
+    documentDetailsWithDueDatesCodingOutPaye = List.empty)
 
   def crystallisedView(isAgent: Boolean = false): Html = taxYearOverviewView(
-    testYear, Some(completeOverview(true)), testChargesList, testObligationsModel, "testBackURL", isAgent, codingOutEnabled = false)
+    testYear, Some(completeOverview(true)), testChargesList, testObligationsModel, "testBackURL", isAgent, codingOutEnabled = false,
+    documentDetailsWithDueDatesCodingOutPaye = List.empty)
 
   def payeView(codingOutEnabled: Boolean, isAgent: Boolean = false): Html = taxYearOverviewView(
-    testYear, Some(completeOverview(false)), payeChargeList, testObligationsModel, "testBackURL", isAgent, codingOutEnabled)
+    testYear, Some(completeOverview(false)), payeChargeList, testObligationsModel, "testBackURL", isAgent, codingOutEnabled,
+    documentDetailsWithDueDatesCodingOutPaye = List.empty)
 
   def immediatelyRejectedByNpsView(codingOutEnabled: Boolean, isAgent: Boolean = false): Html = taxYearOverviewView(
-    testYear, Some(completeOverview(false)), immediatelyRejectedByNps, testObligationsModel, "testBackURL", isAgent, codingOutEnabled)
+    testYear, Some(completeOverview(false)), immediatelyRejectedByNps, testObligationsModel, "testBackURL", isAgent, codingOutEnabled,
+    documentDetailsWithDueDatesCodingOutPaye = List.empty)
 
   def rejectedByNpsPartWayView(codingOutEnabled: Boolean, isAgent: Boolean = false): Html = taxYearOverviewView(
-    testYear, Some(completeOverview(false)), rejectedByNpsPartWay, testObligationsModel, "testBackURL", isAgent, codingOutEnabled)
+    testYear, Some(completeOverview(false)), rejectedByNpsPartWay, testObligationsModel, "testBackURL", isAgent, codingOutEnabled,
+    documentDetailsWithDueDatesCodingOutPaye = List.empty)
 
   def codingOutPartiallyCollectedView(codingOutEnabled: Boolean, isAgent: Boolean = false): Html = taxYearOverviewView(
-    testYear, Some(completeOverview(false)), codingOutPartiallyCollected, testObligationsModel, "testBackURL", isAgent, codingOutEnabled)
+    testYear, Some(completeOverview(false)), codingOutPartiallyCollected, testObligationsModel, "testBackURL", isAgent, codingOutEnabled,
+    documentDetailsWithDueDatesCodingOutPaye = List.empty)
 
   implicit val localDateOrdering: Ordering[LocalDate] = Ordering.by(_.toEpochDay)
 
@@ -675,7 +688,8 @@ class TaxYearOverviewViewSpec extends ViewSpec with FeatureSwitching {
           obligations = testObligationsModel,
           backUrl = "testBackURL",
           isAgent = false,
-          codingOutEnabled = false)
+          codingOutEnabled = false,
+          documentDetailsWithDueDatesCodingOutPaye = documentDetailsWithDueDatesCodingOutPaye)
       }
       thrownException.getMessage shouldBe "Missing Mandatory Expected Field: Due Date"
     }
